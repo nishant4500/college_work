@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Finder - Campus Directory</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .filters {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .faculty-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .faculty-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .faculty-name {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .faculty-info {
+            margin-bottom: 10px;
+            color: #555;
+            display: flex;
+            align-items: center;
+        }
+
+        .faculty-info strong {
+            min-width: 90px;
+            color: #333;
+        }
+
+        .department-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+            color: #666;
+        }
+
+        .location-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 25px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .no-results {
+            text-align: center;
+            color: white;
+            font-size: 1.3em;
+            padding: 40px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .filters {
+                flex-direction: column;
+            }
+
+            .results {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 Faculty Finder</h1>
+            <p class="subtitle">Find your teacher's cabin, contact details in seconds</p>
+        </header>
+
+        <div class="search-section">
+            <input type="text" id="searchBar" class="search-bar" placeholder="Search by teacher name...">
+            
+            <div class="filters">
+                <div class="filter-group">
+                    <label for="buildingFilter">Building</label>
+                    <select id="buildingFilter">
+                        <option value="all">All Buildings</option>
+                        <option value="ABB1">ABB1</option>
+                        <option value="ABB2">ABB2</option>
+                        <option value="ABB3">ABB3</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="departmentFilter">Department/Branch</label>
+                    <select id="departmentFilter">
+                        <option value="all">All Departments</option>
+                        <option value="ECE">ECE</option>
+                        <option value="CS">CS</option>
+                        <option value="BT">BT</option>
+                        <option value="HSS">HSS</option>
+                        <option value="Physics">Physics</option>
+                        <option value="Maths">Maths</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        const facultyData = [
+             {
+    name: "Vikram Karwal",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "vikram.karwal@jiit.ac.in",
+    phone: "9717652233"
+  },
+  {
+    name: "Saurabh Chaturvedi",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "saurabh.chaturvedi@jiit.ac.in",
+    phone: "9910932770"
+  },
+  {
+    name: "Jasmine Saini",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "jasmine.saini@jiit.ac.in",
+    phone: "9871005331"
+  },
+  {
+    name: "Richa Gupta",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "richa.gupta@jiit.ac.in",
+    phone: "9711304116"
+  },
+  {
+    name: "Shruti Kalra",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "shruti.kalra@jiit.ac.in",
+    phone: "9811768476"
+  },
+  {
+    name: "Ashish Goel",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "ashish.goel@jiit.ac.in",
+    phone: "9811946987"
+  },
+  {
+    name: "Shamim Akhter",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "shamim.akhter@jiit.ac.in",
+    phone: "9899037043"
+  },
+  {
+    name: "vijay khare",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "vijay.khare@jiit.ac.in",
+    phone: "9891372671"
+  },
+  {
+    name: "Mandeep Singh",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "mandeep.narula@jiit.ac.in",
+    phone: "8826583790"
+  },
+  {
+    name: "Vineet Khandelwal",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "vineet.khandelwal@jiit.ac.in",
+    phone: "9811378879"
+  },
+  {
+    name: "Gaurav Verma",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "gaurav.verma@jiit.ac.in",
+    phone: "9811506739"
+  },
+  {
+    name: "Vishal Narain Saxena",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "vishal.saxena@jiit.ac.in",
+    phone: "9818538867"
+  },
+  {
+    name: "Dharmendra Kumar Jhariya",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "dharmendra.jhariya@jiit.ac.in",
+    phone: "9635550330"
+  },
+  {
+    name: "Archana Pandey",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "archana.pandey@jiit.ac.in",
+    phone: "9958893317"
+  },
+  {
+    name: "Juhi Gupta",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "juhi@jiit.ac.in",
+    phone: "9650052364"
+  },
+  {
+    name: "Kirmender Singh",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "kirmender.singh@jiit.ac.in",
+    phone: "9717000615"
+  },
+  {
+    name: "Vivek Dwivedi",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "vivek.dwivedi@jiit.ac.in",
+    phone: "7289900592"
+  },
+  {
+    name: "Neetu Joshi",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "neetu.joshi@jiit.ac.in",
+    phone: "9675480315"
+  },
+  {
+    name: "Ekta Goel",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "ekta.goel@jiit.ac.in",
+    phone: "8052696820"
+  },
+  {
+    name: "Ankur Bhardwaj",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "ankur.bhardwaj@jiit.ac.in",
+    phone: "9871173145"
+  },
+  {
+    name: "Ruby Beniwal",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "ruby.beniwal@jiit.ac.in",
+    phone: "9717874337"
+  },
+  {
+    name: "Shivaji Tyagi",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "shivaji.tyagi@jiit.ac.in",
+    phone: "9811523664"
+  },
+  {
+    name: "Shradha Saxena",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "shradha.saxena@jiit.ac.in",
+    phone: "9911373860"
+  },
+  {
+    name: "Nitesh Kumar",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "nitesh.kumar@jiit.ac.in",
+    phone: "9911001239"
+  },
+  {
+    name: "Rachna Singh",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "rachna.singh@jiit.ac.in",
+    phone: "8982865801"
+  },
+  {
+    name: "Chandan Kumar",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "chandan.kumar1@jiit.ac.in",
+    phone: "9090308993"
+  },
+  {
+    name: "Vimal Saini",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "vimal.saini@jiit.ac.in",
+    phone: "9958291037"
+  },
+  {
+    name: "Ankit Garg",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "ankit.garg@jiit.ac.in",
+    phone: "9873125484"
+  },
+  {
+    name: "Smriti Bhatnagar",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "smriti.bhatnagar@jiit.ac.in",
+    phone: "9871290169"
+  },
+  {
+    name: "Madhu Jhariya",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "madhu.jhariya@jiit.ac.in",
+    phone: "9770573288"
+  },
+  {
+    name: "Madhu Jain",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "madhu.jain@jiit.ac.in",
+    phone: "9868045613"
+  },
+  {
+    name: "Rahul Kaushik",
+    building: "",
+    cabin: "",
+    department: "Electronics and Communication Engineering",
+    email: "rahul.kaushik@jiit.ac.in",
+    phone: "9873660813"
+  }
+];
+           
+        
+
+        const searchBar = document.getElementById('searchBar');
+        const buildingFilter = document.getElementById('buildingFilter');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const resultsContainer = document.getElementById('results');
+
+        function displayFaculty(facultyList) {
+            resultsContainer.innerHTML = '';
+
+            if (facultyList.length === 0) {
+                resultsContainer.innerHTML = '<div class="no-results">No faculty members found. Try adjusting your filters.</div>';
+                return;
+            }
+
+            facultyList.forEach(faculty => {
+                const card = document.createElement('div');
+                card.className = 'faculty-card';
+                card.innerHTML = `
+                    <div class="faculty-name">${faculty.name}</div>
+                    <div class="faculty-info">
+                        <strong>Email:</strong> ${faculty.email}
+                    </div>
+                    <div class="faculty-info">
+                        <strong>Phone:</strong> ${faculty.phone}
+                    </div>
+                    <div class="faculty-info">
+                        <strong>Cabin:</strong> ${faculty.cabin}
+                    </div>
+                    <span class="department-tag">${faculty.department}</span>
+                    <div class="location-badge">${faculty.building} - Cabin ${faculty.cabin}</div>
+                `;
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        function filterFaculty() {
+            const searchTerm = searchBar.value.toLowerCase();
+            const buildingValue = buildingFilter.value;
+            const departmentValue = departmentFilter.value;
+
+            const filtered = facultyData.filter(faculty => {
+                const matchesSearch = faculty.name.toLowerCase().includes(searchTerm);
+                const matchesBuilding = buildingValue === 'all' || faculty.building === buildingValue;
+                const matchesDepartment = departmentValue === 'all' || faculty.department === departmentValue;
+                
+                return matchesSearch && matchesBuilding && matchesDepartment;
+            });
+
+            displayFaculty(filtered);
+        }
+
+        searchBar.addEventListener('input', filterFaculty);
+        buildingFilter.addEventListener('change', filterFaculty);
+        departmentFilter.addEventListener('change', filterFaculty);
+
+        displayFaculty(facultyData);
+    </script>
+</body>
+</html>
