@@ -480,10 +480,21 @@
            
         
 
+
         const searchBar = document.getElementById('searchBar');
         const buildingFilter = document.getElementById('buildingFilter');
         const departmentFilter = document.getElementById('departmentFilter');
         const resultsContainer = document.getElementById('results');
+
+        // Map short codes to actual department names to make filtering robust
+        const deptMap = {
+            ECE: 'Electronics and Communication Engineering',
+            CS: 'Computer Science and Engineering',
+            BT: 'Biotechnology',
+            HSS: 'Humanities and Social Sciences',
+            Physics: 'Physics',
+            Maths: 'Mathematics'
+        };
 
         function displayFaculty(facultyList) {
             resultsContainer.innerHTML = '';
@@ -494,6 +505,12 @@
             }
 
             facultyList.forEach(faculty => {
+                const cabinText = faculty.cabin && faculty.cabin.trim() ? faculty.cabin : '—';
+                const buildingText = faculty.building && faculty.building.trim() ? faculty.building : '—';
+                const locationHtml = (buildingText === '—' && cabinText === '—') 
+                    ? '' 
+                    : `<div style="margin-top:10px" class="location-badge">${buildingText}${cabinText !== '—' ? ' - Cabin ' + cabinText : ''}</div>`;
+
                 const card = document.createElement('div');
                 card.className = 'faculty-card';
                 card.innerHTML = `
@@ -505,25 +522,39 @@
                         <strong>Phone:</strong> ${faculty.phone}
                     </div>
                     <div class="faculty-info">
-                        <strong>Cabin:</strong> ${faculty.cabin}
+                        <strong>Cabin:</strong> ${cabinText}
                     </div>
                     <span class="department-tag">${faculty.department}</span>
-                    <div class="location-badge">${faculty.building} - Cabin ${faculty.cabin}</div>
+                    ${locationHtml}
                 `;
                 resultsContainer.appendChild(card);
             });
         }
 
         function filterFaculty() {
-            const searchTerm = searchBar.value.toLowerCase();
+            const searchTerm = searchBar.value.toLowerCase().trim();
             const buildingValue = buildingFilter.value;
             const departmentValue = departmentFilter.value;
 
             const filtered = facultyData.filter(faculty => {
-                const matchesSearch = faculty.name.toLowerCase().includes(searchTerm);
-                const matchesBuilding = buildingValue === 'all' || faculty.building === buildingValue;
-                const matchesDepartment = departmentValue === 'all' || faculty.department === departmentValue;
-                
+                const nameLower = faculty.name.toLowerCase();
+
+                const matchesSearch = searchTerm === '' || nameLower.includes(searchTerm);
+
+                const matchesBuilding = buildingValue === 'all' || (faculty.building && faculty.building === buildingValue);
+
+                let matchesDepartment = true;
+                if (departmentValue !== 'all') {
+                    const mapped = deptMap[departmentValue];
+                    const facultyDept = faculty.department ? faculty.department.toLowerCase() : '';
+                    if (mapped) {
+                        matchesDepartment = facultyDept === mapped.toLowerCase() || facultyDept.includes(departmentValue.toLowerCase());
+                    } else {
+                        // if no mapping, do a best-effort contains match
+                        matchesDepartment = facultyDept.includes(departmentValue.toLowerCase());
+                    }
+                }
+
                 return matchesSearch && matchesBuilding && matchesDepartment;
             });
 
